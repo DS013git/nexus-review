@@ -28,6 +28,16 @@ jobs:
           git fetch origin ${{ github.base_ref }}
           git diff origin/${{ github.base_ref }}...HEAD > /tmp/pr.diff
 
+      - name: Debug env (temporary)
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "GROQ_API_KEY is EMPTY or not set"
+          else
+            echo "GROQ_API_KEY is set, length: ${#GROQ_API_KEY}"
+          fi
+
       - name: Run Nexus review
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
