@@ -77,6 +77,28 @@ async function reviewFile(file: FileDiff, allFiles: FileDiff[]): Promise<CriticV
   return criticVerdict;
 }
 
+async function postPRComment(comment: string) {
+  const repo = process.env.GITHUB_REPOSITORY; // "owner/repo", auto-set by Actions
+  const prNumber = process.env.PR_NUMBER;      // you'll pass this in
+  const token = process.env.GITHUB_TOKEN;
+
+  const response = await fetch(
+    `https://api.github.com/repos/${repo}/issues/${prNumber}/comments`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+      },
+      body: JSON.stringify({ body: comment }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to post comment: ${response.status} ${await response.text()}`);
+  }
+}
+
 async function main(): Promise<void> {
   const diffPath = process.argv[2] ?? "tests/sample.diff";
   const diff = await fs.readFile(diffPath, "utf-8");
@@ -90,6 +112,16 @@ async function main(): Promise<void> {
   const comment = await writeReviewComment(allCriticVerdicts);
   console.log("\n=== FINAL PR COMMENT ===\n");
   console.log(comment);
+
+  if (process.env.GITHUB_ACTIONS === "true") {
+    await postPRComment(comment);
+    console.log("\n✓ Comment posted to PR");
+  } else {
+    console.log("\n(local run — skipping PR comment post)");
+  }
 }
 
-await main();
+await main().catch((err) => {
+  console.error("Nexus review failed:", err);
+  process.exit(1);
+});
