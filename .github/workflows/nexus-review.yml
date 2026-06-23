@@ -34,3 +34,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: bun run src/orchestrator.ts /tmp/pr.diff
+
+      - name: Debug env (temporary)
+        run: |
+            if [ -z "$GROQ_API_KEY" ]; then
+            echo "GROQ_API_KEY is EMPTY or not set"
+            else
+            echo "GROQ_API_KEY is set, length: ${#GROQ_API_KEY}"
+            fi
+        env:
+            GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
